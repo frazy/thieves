@@ -49,7 +49,7 @@ func (this *Thief) Trim(expr string) *Thief {
 }
 
 func (this *Thief) TrimAll() *Thief {
-	return this.TrimConsecutiveBlank().TrimNewLine().TrimScript().TrimStyle()
+	return this.TrimScript().TrimStyle().TrimConsecutiveBlank().TrimNewLine()
 }
 
 func (this *Thief) TrimConsecutiveBlank() *Thief {
@@ -73,9 +73,25 @@ func (this *Thief) Val() string {
 }
 
 func New(url string) *Thief {
+	return NewWithHeader(url, http.Header{"Accept": []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}})
+}
+
+func NewWithHeader(url string, headers http.Header) *Thief {
 	thief := &Thief{url, ""}
 
-	res, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Printf("NewRequest %s error: %s\r\n", url, err.Error())
+		return thief
+	}
+	for key, values := range headers {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
+
+	client := &http.Client{}
+	res, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("GET %s error: %s\r\n", url, err.Error())
 		return thief
