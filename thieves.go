@@ -14,13 +14,24 @@ type Thief struct {
 }
 
 func (this *Thief) Cut(from, to string) *Thief {
+	if len(this.val) == 0 {
+		return this
+	}
+
 	var i, j = strings.Index(this.val, from), strings.LastIndex(this.val, to)
 	max := len(this.val)
 	if i <= -1 {
 		i = 0
 	}
+	if j <= -1 {
+		j = 0
+	}
 	if j > max {
 		j = max
+	}
+	if i == 0 && j == 0 {
+		this.val = ""
+		return this
 	}
 	this.val = this.val[i:j]
 	return this
@@ -98,6 +109,9 @@ func NewWithHeader(url string, headers http.Header) *Thief {
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode != 200 {
+		return thief
+	}
 	bytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Printf("READ res.Body error: %s\r\n", err.Error())
