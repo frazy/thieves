@@ -3,9 +3,11 @@ package thieves
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type Thief struct {
@@ -84,10 +86,10 @@ func (this *Thief) Val() string {
 }
 
 func New(url string) *Thief {
-	return NewWithHeader(url, http.Header{"Accept": []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}})
+	return NewWithHeader(url, http.Header{"Accept": []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}}, 5*time.Second)
 }
 
-func NewWithHeader(url string, headers http.Header) *Thief {
+func NewWithHeader(url string, headers http.Header, timeout time.Duration) *Thief {
 	thief := &Thief{url, ""}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -101,7 +103,19 @@ func NewWithHeader(url string, headers http.Header) *Thief {
 		}
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			Dial: func(netw, addr string) (net.Conn, error) {
+				deadline := time.Now().Add(timeout + 5*time.Second)
+				c, err := net.DialTimeout(netw, addr, timeout)
+				if err != nil {
+					return nil, err
+				}
+				c.SetDeadline(deadline)
+				return c, nil
+			},
+		},
+	}
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("GET %s error: %s\r\n", url, err.Error())
