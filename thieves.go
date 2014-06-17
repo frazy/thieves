@@ -8,6 +8,12 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/axgle/mahonia"
+)
+
+const (
+	_charset_utf8 = "utf-8"
 )
 
 type Thief struct {
@@ -86,10 +92,10 @@ func (this *Thief) Val() string {
 }
 
 func New(url string) *Thief {
-	return NewWithHeader(url, http.Header{"Accept": []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}}, 5*time.Second)
+	return NewWithHeader(url, http.Header{"Accept": []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"}}, 5*time.Second, _charset_utf8)
 }
 
-func NewWithHeader(url string, headers http.Header, timeout time.Duration) *Thief {
+func NewWithHeader(url string, headers http.Header, timeout time.Duration, charset string) *Thief {
 	thief := &Thief{url, ""}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -132,6 +138,11 @@ func NewWithHeader(url string, headers http.Header, timeout time.Duration) *Thie
 		return thief
 	}
 
-	thief.val = string(bytes)
+	if charset == _charset_utf8 {
+		thief.val = string(bytes)
+	} else {
+		coder := mahonia.NewDecoder(charset)
+		thief.val = coder.ConvertString(bytes)
+	}
 	return thief
 }
