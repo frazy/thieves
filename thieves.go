@@ -142,7 +142,7 @@ func NewWithHeader(url string, headers http.Header, timeout time.Duration, chars
 		thief.val = string(bytes)
 	} else {
 		coder := mahonia.NewDecoder(charset)
-		thief.val = coder.ConvertString(bytes)
+		thief.val = coder.ConvertString(string(bytes))
 	}
 	return thief
 }
